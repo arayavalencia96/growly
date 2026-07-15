@@ -1,16 +1,16 @@
-FROM node:22-alpine AS dependencies
+FROM node:24-alpine AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN HUSKY=0 npm ci
 FROM dependencies AS build
 COPY tsconfig*.json nest-cli.json ./
 COPY src ./src
 RUN npm run build
-FROM node:22-alpine AS production-dependencies
+FROM node:24-alpine AS production-dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
-FROM node:22-alpine AS runtime
+RUN HUSKY=0 npm ci && npm prune --omit=dev && npm cache clean --force
+FROM node:24-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules
