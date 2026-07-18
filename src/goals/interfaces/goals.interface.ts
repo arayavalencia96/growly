@@ -1,4 +1,4 @@
-export const GOAL_TYPES = ['long_term', 'short_term'] as const;
+export const GOAL_TYPES = ['long_term', 'short_term', 'medium_term'] as const;
 export type GoalType = (typeof GOAL_TYPES)[number];
 
 export const GOAL_STATUSES = ['active', 'paused', 'completed'] as const;

@@ -5,6 +5,19 @@ export const VERIFICATION_PURPOSES = [
 ] as const;
 export type VerificationPurpose = (typeof VERIFICATION_PURPOSES)[number];
 
+export const ACCOUNT_DEACTIVATION_REASONS = [
+  'no_longer_needed',
+  'missing_features',
+  'difficult_to_use',
+  'privacy_concerns',
+  'technical_issues',
+  'other',
+] as const;
+export type AccountDeactivationReason =
+  (typeof ACCOUNT_DEACTIVATION_REASONS)[number];
+
+export const CURRENT_TERMS_VERSION = '1.0.0';
+
 export interface IJwtPayload {
   sub: string;
   email: string;

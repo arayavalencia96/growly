@@ -15,6 +15,7 @@ import { Model } from 'mongoose';
 import { EmailService } from '../services/email.service';
 import {
   ChangeBlockedPasswordDto,
+  DeactivateAccountDto,
   LoginDto,
   RegisterDto,
   ResetPasswordDto,
@@ -30,6 +31,7 @@ import {
 import {
   IAuthResponse,
   IAuthenticatedUser,
+  CURRENT_TERMS_VERSION,
   IJwtPayload,
   IUserResponse,
   VerificationPurpose,
@@ -57,6 +59,8 @@ export class AuthService {
       name: dto.name.trim(),
       email,
       passwordHash: await bcrypt.hash(dto.password, 12),
+      termsAcceptedAt: new Date(),
+      termsVersion: CURRENT_TERMS_VERSION,
     });
     const code = await this.assignVerificationCode(user, 'registration');
     await this.sendCodeEmail(user, code, 'registration', false);
@@ -110,6 +114,12 @@ export class AuthService {
       user.passwordChangeRequired = true;
     }
     await user.save();
+    if (purpose === 'email_change') {
+      await this.sessionModel.updateMany(
+        { userId: user._id.toString(), revokedAt: null },
+        { revokedAt: new Date() },
+      );
+    }
     if (purpose === 'registration') {
       try {
         await this.emailService.sendWelcome({
@@ -366,16 +376,38 @@ export class AuthService {
     } else {
       await user.save();
     }
+    if (dto.newPassword) {
+      await this.sessionModel.updateMany(
+        { userId: authenticated.userId, revokedAt: null },
+        { revokedAt: new Date() },
+      );
+    }
     return {
       user: this.mapUser(user),
       ...(code ? this.developmentCode(code) : {}),
     };
   }
 
-  async disable(authenticated: IAuthenticatedUser): Promise<IUserResponse> {
+  async getProfile(authenticated: IAuthenticatedUser): Promise<IUserResponse> {
     const user = await this.userModel.findById(authenticated.userId);
     if (!user) throw new UnauthorizedException();
+    return this.mapUser(user);
+  }
+
+  async disable(
+    authenticated: IAuthenticatedUser,
+    dto: DeactivateAccountDto,
+  ): Promise<IUserResponse> {
+    const user = await this.userModel
+      .findById(authenticated.userId)
+      .select('+passwordHash');
+    if (!user) throw new UnauthorizedException();
+    if (!(await bcrypt.compare(dto.currentPassword, user.passwordHash)))
+      throw new UnauthorizedException('Current password is invalid');
     user.isDisabled = true;
+    user.disabledAt = new Date();
+    user.deactivationReason = dto.reason;
+    user.deactivationComment = dto.comment?.trim() || null;
     await user.save();
     await this.sessionModel.updateMany(
       { userId: authenticated.userId, revokedAt: null },

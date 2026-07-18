@@ -1,11 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  Equals,
   IsEmail,
+  IsBoolean,
+  IsIn,
+  IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
+  MinLength,
+  ValidateIf,
 } from 'class-validator';
+import { ACCOUNT_DEACTIVATION_REASONS } from '../interfaces/auth.interface';
 
 const PASSWORD_PATTERN = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 const PASSWORD_MESSAGE =
@@ -20,6 +27,11 @@ export class RegisterDto {
   @IsString()
   @Matches(PASSWORD_PATTERN, { message: PASSWORD_MESSAGE })
   password: string;
+
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  @Equals(true, { message: 'Terms and conditions must be accepted' })
+  termsAccepted: boolean;
 }
 
 export class LoginDto {
@@ -89,4 +101,25 @@ export class UpdateProfileDto {
   @IsString()
   @Matches(PASSWORD_PATTERN, { message: PASSWORD_MESSAGE })
   newPassword?: string;
+}
+
+export class DeactivateAccountDto {
+  @ApiProperty({ enum: ACCOUNT_DEACTIVATION_REASONS })
+  @IsIn(ACCOUNT_DEACTIVATION_REASONS)
+  reason: (typeof ACCOUNT_DEACTIVATION_REASONS)[number];
+
+  @ApiPropertyOptional()
+  @ValidateIf(
+    (dto: DeactivateAccountDto) =>
+      dto.reason === 'other' || dto.comment !== undefined,
+  )
+  @IsString()
+  @MaxLength(500)
+  @IsNotEmpty()
+  @MinLength(10)
+  comment?: string;
+
+  @ApiProperty()
+  @IsString()
+  currentPassword: string;
 }
