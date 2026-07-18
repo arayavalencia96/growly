@@ -1,7 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { VERIFICATION_PURPOSES } from '../interfaces/auth.interface';
+import {
+  ACCOUNT_DEACTIVATION_REASONS,
+  VERIFICATION_PURPOSES,
+} from '../interfaces/auth.interface';
 import type { VerificationPurpose } from '../interfaces/auth.interface';
+import type { AccountDeactivationReason } from '../interfaces/auth.interface';
 
 @Schema({ timestamps: true, collection: 'users', versionKey: false })
 export class User {
@@ -17,9 +21,16 @@ export class User {
   @Prop({ required: true, select: false }) passwordHash: string;
   @Prop({ default: false, index: true }) isValidated: boolean;
   @Prop({ default: false, index: true }) isDisabled: boolean;
+  @Prop({ type: Date, default: null }) disabledAt?: Date | null;
+  @Prop({ type: String, enum: ACCOUNT_DEACTIVATION_REASONS, default: null })
+  deactivationReason?: AccountDeactivationReason | null;
+  @Prop({ type: String, trim: true, default: null })
+  deactivationComment?: string | null;
   @Prop({ default: false, index: true }) isBlocked: boolean;
   @Prop({ default: false }) passwordChangeRequired: boolean;
   @Prop({ default: 0 }) failedLoginAttempts: number;
+  @Prop({ type: Date, default: null }) termsAcceptedAt?: Date | null;
+  @Prop({ type: String, default: null }) termsVersion?: string | null;
   @Prop({ type: String, select: false, default: null }) verificationCodeHash?:
     string | null;
   @Prop({ type: Date, default: null }) verificationCodeExpiresAt?: Date | null;

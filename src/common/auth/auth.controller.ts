@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Patch,
@@ -20,6 +21,7 @@ import { IResult } from '../interfaces/common.interface';
 import { AuthService } from './auth.service';
 import {
   ChangeBlockedPasswordDto,
+  DeactivateAccountDto,
   ForgotPasswordDto,
   LoginDto,
   LogoutDto,
@@ -184,6 +186,21 @@ export class AuthController {
     );
   }
 
+  @Get('profile')
+  @ApiBearerAuth()
+  @ApiOkResponse()
+  async getProfile(
+    @Req() request: AuthenticatedRequest,
+  ): Promise<IResult<IUserResponse>> {
+    return {
+      result: await this.authService.getProfile(request.user),
+      message: 'Profile retrieved successfully',
+      description: 'Current authenticated user profile',
+      statuscode: HttpStatus.OK,
+      ok: true,
+    };
+  }
+
   @Delete('profile')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -191,9 +208,10 @@ export class AuthController {
   @ApiOkResponse()
   async disable(
     @Req() request: AuthenticatedRequest,
+    @Body() dto: DeactivateAccountDto,
   ): Promise<IResult<IUserResponse>> {
     return {
-      result: await this.authService.disable(request.user),
+      result: await this.authService.disable(request.user, dto),
       message: 'User disabled successfully',
       description: 'The account was logically disabled',
       statuscode: HttpStatus.OK,
