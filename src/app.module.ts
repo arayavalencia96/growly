@@ -7,6 +7,7 @@ import { CommonModule } from './common/common.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './common/auth/auth.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AuthModule } from './common/auth/auth.module';
     }),
     CommonModule,
     AuthModule,
+    HealthModule,
     GoalsModule,
     GoalsMovementsModule,
     InvestmentOperationsModule,
